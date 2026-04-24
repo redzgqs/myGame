@@ -1,25 +1,47 @@
 #ifndef MYWINDOW_H
 #define MYWINDOW_H
 
-#include <QPixmap>
 #include <QWidget>
 #include <QTimer>
 #include <QKeyEvent>
 #include <QPaintEvent>
+#include <QPixmap>
+#include <QVector>
+#include <QPoint>
+#include <QRect>
+
+struct Role
+{
+    int x;
+    int y;
+    int w;
+    int h;
+    int vx;
+    int vy;
+    bool alive;
+    bool onGround;
+    bool isCircle;
+};
+
+struct Spike
+{
+    QPoint a;
+    QPoint b;
+    QPoint c;
+};
 
 class MyWindow : public QWidget
 {
     Q_OBJECT
-
 
 public:
     MyWindow(QWidget *parent = nullptr);
     ~MyWindow();
 
 protected:
-    void paintEvent(QPaintEvent *event);
-    void keyPressEvent(QKeyEvent *event);
-    void keyReleaseEvent(QKeyEvent *event);
+    void paintEvent(QPaintEvent *event) override;
+    void keyPressEvent(QKeyEvent *event) override;
+    void keyReleaseEvent(QKeyEvent *event) override;
 
 private slots:
     void updateGame();
@@ -27,8 +49,18 @@ private slots:
 private:
     void initGame();
     void resetGame();
+
+    void loadLevel(int level);
+    void nextLevel();
+
+    void drawRole(QPainter &painter, const Role &role);
+    void updateRole(Role &role, int dir);
+    QRect roleRect(const Role &role) const;
+
     bool pointInTriangle(QPoint p, QPoint a, QPoint b, QPoint c);
-    bool objectHitSpike(int x, int y, int w, int h);
+    bool roleHitSpike(const Role &role);
+    bool allSquaresDead() const;
+    bool circlesHitSquares() const;
 
 private:
     QTimer *timer;
@@ -39,25 +71,15 @@ private:
     bool keyRight;
     bool keyUp;
 
-    // 圆
-    int circleX;
-    int circleY;
-    int circleW;
-    int circleH;
-    int circleVx;
-    int circleVy;
-    bool circleAlive;
-    bool circleOnGround;
+    // 多个圆和多个方块
+    QVector<Role> circles;
+    QVector<Role> squares;
 
-    // 方块
-    int squareX;
-    int squareY;
-    int squareW;
-    int squareH;
-    int squareVx;
-    int squareVy;
-    bool squareAlive;
-    bool squareOnGround;
+    // 所有刺
+    QVector<Spike> spikes;
+
+    // 当前关卡
+    int currentLevel;
 
     // 地图参数
     int groundY;
