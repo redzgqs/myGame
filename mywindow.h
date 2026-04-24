@@ -9,26 +9,8 @@
 #include <QVector>
 #include <QPoint>
 #include <QRect>
+#include "gameobjects.h"
 
-struct Role
-{
-    int x;
-    int y;
-    int w;
-    int h;
-    int vx;
-    int vy;
-    bool alive;
-    bool onGround;
-    bool isCircle;
-};
-
-struct Spike
-{
-    QPoint a;
-    QPoint b;
-    QPoint c;
-};
 
 class MyWindow : public QWidget
 {
@@ -62,6 +44,10 @@ private:
     bool allSquaresDead() const;
     bool circlesHitSquares() const;
 
+    QRect blockRect(const Block &block) const;
+
+    bool allCirclesEscaped() const;
+
 private:
     QTimer *timer;
     QPixmap bg;
@@ -77,6 +63,9 @@ private:
 
     // 所有刺
     QVector<Spike> spikes;
+
+    // block
+    QVector<Block> blocks;
 
     // 当前关卡
     int currentLevel;

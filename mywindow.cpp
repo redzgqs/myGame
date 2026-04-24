@@ -5,6 +5,7 @@
 #include <QDebug>
 #include <QMessageBox>
 #include <QPolygon>
+#include "leveldata.h"
 
 MyWindow::MyWindow(QWidget *parent)
     : QWidget(parent)
@@ -33,7 +34,7 @@ void MyWindow::initGame()
     keyUp = false;
 
     moveSpeed = 5;
-    jumpSpeed = 20;
+    jumpSpeed = 19;
     gravity = 1;
 
     currentLevel = 1;
@@ -56,85 +57,29 @@ void MyWindow::loadLevel(int level)
     keyRight = false;
     keyUp = false;
 
-    circles.clear();
-    squares.clear();
-    spikes.clear();
+    LevelData data = buildLevelData(level, width());
 
-    groundY = 524;
+    circles = data.circles;
+    squares = data.squares;
+    spikes = data.spikes;
+    blocks = data.blocks;
+
+    groundY = data.groundY;
+
+    doorW = data.doorW;
+    doorH = data.doorH;
+    doorX = data.doorX;
+    doorY = data.doorY;
 
     doorOpen = false;
-    doorW = 50;
-    doorH = 80;
-    doorX = 820;
-    doorY = groundY - doorH;
-
-    auto makeRole = [&](int x, int y, bool isCircle)
-    {
-        Role r;
-        r.x = x;
-        r.y = y;
-        r.w = 40;
-        r.h = 40;
-        r.vx = 0;
-        r.vy = 0;
-        r.alive = true;
-        r.onGround = true;
-        r.isCircle = isCircle;
-        return r;
-    };
-
-    auto addSpike = [&](QPoint a, QPoint b, QPoint c)
-    {
-        Spike s;
-        s.a = a;
-        s.b = b;
-        s.c = c;
-        spikes.append(s);
-    };
-
-    // =========================
-    // 第1关
-    // =========================
-    if (level == 1)
-    {
-        circles.append(makeRole(100, groundY - 40, true));
-        squares.append(makeRole(220, groundY - 40, false));
-
-        addSpike(QPoint(500, groundY), QPoint(520, groundY - 30), QPoint(540, groundY));
-        addSpike(QPoint(540, groundY), QPoint(560, groundY - 30), QPoint(580, groundY));
-    }
-    // =========================
-    // 第2关
-    // 一个圆，两个方块
-    // =========================
-    else if (level == 2)
-    {
-        int leftSquareX = 120;
-        int circleX = 430;
-        int rightSquareX = 680;
-
-        int leftSpikeX = 250;
-        int rightSpikeX = 560;
-
-        doorX = 820;
-
-        squares.append(makeRole(leftSquareX, groundY - 40, false));
-        circles.append(makeRole(circleX, groundY - 40, true));
-        squares.append(makeRole(rightSquareX, groundY - 40, false));
-
-        addSpike(QPoint(leftSpikeX, groundY), QPoint(leftSpikeX + 20, groundY - 30), QPoint(leftSpikeX + 40, groundY));
-        addSpike(QPoint(leftSpikeX + 40, groundY), QPoint(leftSpikeX + 60, groundY - 30), QPoint(leftSpikeX + 80, groundY));
-
-        addSpike(QPoint(rightSpikeX, groundY), QPoint(rightSpikeX + 20, groundY - 30), QPoint(rightSpikeX + 40, groundY));
-        addSpike(QPoint(rightSpikeX + 40, groundY), QPoint(rightSpikeX + 60, groundY - 30), QPoint(rightSpikeX + 80, groundY));
-    }
 }
+
 
 void MyWindow::nextLevel()
 {
     currentLevel++;
 
-    if (currentLevel > 2)
+    if (currentLevel > 3)
     {
         currentLevel = 1;
         QMessageBox::information(this, "游戏完成", "恭喜你完成了全部关卡！");
@@ -149,9 +94,14 @@ QRect MyWindow::roleRect(const Role &role) const
     return QRect(role.x, role.y, role.w, role.h);
 }
 
+QRect MyWindow::blockRect(const Block &block) const
+{
+    return QRect(block.x, block.y, block.w, block.h);
+}
+
 void MyWindow::drawRole(QPainter &painter, const Role &role)
 {
-    if (!role.alive)
+    if (!role.alive || role.escaped)
         return;
 
     if (role.isCircle)
@@ -168,11 +118,15 @@ void MyWindow::drawRole(QPainter &painter, const Role &role)
 
 void MyWindow::updateRole(Role &role, int dir)
 {
-    if (!role.alive)
+    if (!role.alive || role.escaped)
         return;
 
-    // 左右移动
+    // =========================
+    // 1. 水平移动
+    // =========================
     role.vx = dir * moveSpeed;
+
+    int oldX = role.x;
     role.x += role.vx;
 
     // 左右边界
@@ -181,22 +135,67 @@ void MyWindow::updateRole(Role &role, int dir)
     if (role.x + role.w > width())
         role.x = width() - role.w;
 
-    // 重力
+    // 和平台的左右碰撞
+    QRect r = roleRect(role);
+    for (int i = 0; i < blocks.size(); i++)
+    {
+        QRect b = blockRect(blocks[i]);
+        if (r.intersects(b))
+        {
+            if (role.vx > 0)
+                role.x = blocks[i].x - role.w;
+            else if (role.vx < 0)
+                role.x = blocks[i].x + blocks[i].w;
+
+            r = roleRect(role);
+        }
+    }
+
+    // =========================
+    // 2. 垂直移动
+    // =========================
+    int oldY = role.y;
+
     role.vy += gravity;
     role.y += role.vy;
+    role.onGround = false;
 
-    // 地面碰撞
+    r = roleRect(role);
+
+    // 先处理和平台的上下碰撞
+    for (int i = 0; i < blocks.size(); i++)
+    {
+        QRect b = blockRect(blocks[i]);
+
+        if (r.intersects(b))
+        {
+            // 从上方落到平台上
+            if (oldY + role.h <= blocks[i].y)
+            {
+                role.y = blocks[i].y - role.h;
+                role.vy = 0;
+                role.onGround = true;
+            }
+            // 从下方顶到平台底部
+            else if (oldY >= blocks[i].y + blocks[i].h)
+            {
+                role.y = blocks[i].y + blocks[i].h;
+                role.vy = 0;
+            }
+
+            r = roleRect(role);
+        }
+    }
+
+    // 再处理最底部地面
     if (role.y + role.h >= groundY)
     {
         role.y = groundY - role.h;
         role.vy = 0;
         role.onGround = true;
     }
-    else
-    {
-        role.onGround = false;
-    }
 }
+
 
 bool MyWindow::pointInTriangle(QPoint p, QPoint a, QPoint b, QPoint c)
 {
@@ -236,7 +235,7 @@ bool MyWindow::circlesHitSquares() const
 {
     for (int i = 0; i < circles.size(); i++)
     {
-        if (!circles[i].alive)
+        if (!circles[i].alive || circles[i].escaped)
             continue;
 
         QRect cRect = roleRect(circles[i]);
@@ -276,6 +275,13 @@ void MyWindow::paintEvent(QPaintEvent *event)
 
     // 背景
     painter.drawPixmap(rect(), bg);
+
+    // block
+    painter.setBrush(Qt::black);
+    for (int i = 0; i < blocks.size(); i++)
+    {
+        painter.drawRect(blocks[i].x, blocks[i].y, blocks[i].w, blocks[i].h);
+    }
 
     // 刺
     painter.setBrush(Qt::red);
@@ -367,6 +373,17 @@ void MyWindow::keyReleaseEvent(QKeyEvent *event)
         keyUp = false;
 }
 
+bool MyWindow::allCirclesEscaped() const
+{
+    for (int i = 0; i < circles.size(); i++)
+    {
+        if (circles[i].alive && !circles[i].escaped)
+            return false;
+    }
+    return true;
+}
+
+
 void MyWindow::updateGame()
 {
     int dir = 0;
@@ -398,7 +415,7 @@ void MyWindow::updateGame()
     // 圆碰刺：失败重开
     for (int i = 0; i < circles.size(); i++)
     {
-        if (circles[i].alive && roleHitSpike(circles[i]))
+        if (circles[i].alive && !circles[i].escaped && roleHitSpike(circles[i]))
         {
             resetGame();
             update();
@@ -418,28 +435,38 @@ void MyWindow::updateGame()
     // 所有方块都死了，门打开
     doorOpen = allSquaresDead();
 
-    // 任意活着的圆进入门：进入下一关
+    // all活着的圆进入门：进入下一关
     if (doorOpen)
     {
         QRect doorRect(doorX, doorY, doorW, doorH);
 
+        // 先检查有没有圆进入门
         for (int i = 0; i < circles.size(); i++)
         {
-            if (circles[i].alive && roleRect(circles[i]).intersects(doorRect))
+            if (circles[i].alive && !circles[i].escaped)
             {
-                timer->stop();
-
-                if (currentLevel < 2)
+                if (roleRect(circles[i]).intersects(doorRect))
                 {
-                    QMessageBox::information(this, "过关", QString("第 %1 关完成！").arg(currentLevel));
+                    circles[i].escaped = true;
                 }
-
-                nextLevel();
-
-                timer->start(16);
-                update();
-                return;
             }
+        }
+
+        // 所有圆都进门后，才真正通关
+        if (allCirclesEscaped())
+        {
+            timer->stop();
+
+            if (currentLevel < 3)
+            {
+                QMessageBox::information(this, "过关", QString("第 %1 关完成！").arg(currentLevel));
+            }
+
+            nextLevel();
+
+            timer->start(16);
+            update();
+            return;
         }
     }
 

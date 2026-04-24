@@ -21,10 +21,14 @@ set(PROJECT_SOURCES
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(1
-        MANUAL_FINALIZATION
-        ${PROJECT_SOURCES}
+        main.cpp
+        mywindow.cpp
+        mywindow.h
+        mywindow.ui
         resource.qrc
-
+        leveldata.cpp
+        leveldata.h
+        gameobjects.h
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET 1 APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
