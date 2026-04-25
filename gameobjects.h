@@ -32,4 +32,15 @@ struct Block
     int h;
 };
 
+struct MovingSpike
+{
+    int x;
+    int y;
+    int count;
+    int vx;
+    int leftBound;
+    int rightBound;
+    int height;   // 新增：移动刺高度
+};
+
 #endif // GAMEOBJECTS_H

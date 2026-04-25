@@ -3,6 +3,8 @@
 LevelData buildLevelData(int level, int windowWidth)
 {
     LevelData data;
+    data.doorOpenAtStart = false;
+
 
     data.groundY = 524;
 
@@ -45,6 +47,20 @@ LevelData buildLevelData(int level, int windowWidth)
         b.h = h;
         data.blocks.append(b);
     };
+
+    auto addMovingSpike = [&](int x, int y, int count, int vx, int leftBound, int rightBound, int height)
+    {
+        MovingSpike m;
+        m.x = x;
+        m.y = y;
+        m.count = count;
+        m.vx = vx;
+        m.leftBound = leftBound;
+        m.rightBound = rightBound;
+        m.height = height;
+        data.movingSpikes.append(m);
+    };
+
 
     // =========================
     // 第1关
@@ -202,6 +218,92 @@ LevelData buildLevelData(int level, int windowWidth)
         addGapSpikes(x3);
         addGapSpikes(x4);
         addGapSpikes(x5);
+    }
+    else if (level == 5)
+    {
+        // =========================
+        // 第5关：三层三圆三方块
+        // 门仍然在右下角
+        // =========================
+
+        data.doorW = 50;
+        data.doorH = 80;
+        data.doorX = 820;
+        data.doorY = data.groundY - data.doorH;
+
+        // -------------------------
+        // 平台
+        // -------------------------
+        // 中层长平台
+        addBlock(170, 360, 240, 20);
+
+        // 上层长平台（加长，方便同时放圆和方块）
+        addBlock(500, 250, 240, 20);
+
+        // -------------------------
+        // 圆
+        // -------------------------
+        // 圆1：左下角地面
+        data.circles.append(makeRole(40, data.groundY - 40, true));
+
+        // 圆2：中层平台左边
+        data.circles.append(makeRole(185, 360 - 40, true));
+
+        // 圆3：上层平台左边
+        data.circles.append(makeRole(580, 250 - 40, true));
+
+        // -------------------------
+        // 方块
+        // -------------------------
+        // 方块1：地面中间，先往左可掉进左侧三连刺
+        data.squares.append(makeRole(310, data.groundY - 40, false));
+
+        // 方块2：中层平台右边，往右会掉下去，再落进地面四连刺
+        data.squares.append(makeRole(350, 360 - 40, false));
+
+
+
+        // -------------------------
+        // 刺
+        // -------------------------
+
+        // 地面左侧三连刺：用于清掉方块1
+        addSpike(QPoint(230, data.groundY), QPoint(240, data.groundY - 28), QPoint(250, data.groundY));
+        addSpike(QPoint(250, data.groundY), QPoint(260, data.groundY - 28), QPoint(270, data.groundY));
+        addSpike(QPoint(270, data.groundY), QPoint(280, data.groundY - 28), QPoint(290, data.groundY));
+
+        // 地面中右四连刺：用于清掉方块2，也增加圆回收难度
+        addSpike(QPoint(415, data.groundY), QPoint(425, data.groundY - 28), QPoint(435, data.groundY));
+        addSpike(QPoint(435, data.groundY), QPoint(445, data.groundY - 28), QPoint(455, data.groundY));
+        addSpike(QPoint(455, data.groundY), QPoint(465, data.groundY - 28), QPoint(475, data.groundY));
+        addSpike(QPoint(475, data.groundY), QPoint(485, data.groundY - 28), QPoint(495, data.groundY));
+        addSpike(QPoint(495, data.groundY), QPoint(505, data.groundY - 28), QPoint(515, data.groundY));
+
+        // 上层右侧三连刺：用于清掉方块3
+        addSpike(QPoint(670, 250), QPoint(680, 222), QPoint(690, 250));
+        addSpike(QPoint(690, 250), QPoint(700, 222), QPoint(710, 250));
+        addSpike(QPoint(710, 250), QPoint(720, 222), QPoint(730, 250));
+    }
+    else if (level == 6)
+    {
+        // 第6关：移动刺
+        // 一个圆，没有方块，门一开始就开着
+
+        data.doorW = 50;
+        data.doorH = 80;
+        data.doorX = 820;
+        data.doorY = data.groundY - data.doorH;
+        data.doorOpenAtStart = true;
+
+        // 一个圆，最左边
+        data.circles.append(makeRole(40, data.groundY - 40, true));
+
+        // 三个移动刺，初始都向左移动
+        // count = 2 表示每个移动刺由两个小三角组成
+        // rightBound 设成 780，避免它们直接堵住最右边门口
+        addMovingSpike(220, data.groundY, 2, -5, 0, 780, 36);
+        addMovingSpike(500, data.groundY, 2, -5, 0, 780, 36);
+        addMovingSpike(780, data.groundY, 2, -5, 0, 780, 36);
     }
 
     return data;

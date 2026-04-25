@@ -23,6 +23,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(1
         main.cpp
         mywindow.cpp
+        mywindow_logic.cpp
         mywindow.h
         mywindow.ui
         resource.qrc

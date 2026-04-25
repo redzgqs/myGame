@@ -10,6 +10,7 @@ struct LevelData
     QVector<Role> squares;
     QVector<Spike> spikes;
     QVector<Block> blocks;
+    QVector<MovingSpike> movingSpikes;
 
     int groundY;
 
@@ -17,6 +18,8 @@ struct LevelData
     int doorY;
     int doorW;
     int doorH;
+
+    bool doorOpenAtStart;
 };
 
 LevelData buildLevelData(int level, int windowWidth);

@@ -64,6 +64,8 @@ private:
 
     void killCircleAndReset(int index);
 
+    void updateMovingSpikes();
+
 
 private:
     QTimer *timer;
@@ -87,6 +89,12 @@ private:
     // block
     QVector<Block> blocks;
 
+
+    QVector<MovingSpike> movingSpikes;
+    bool movingSpikesStarted;
+    int movingSpikeDelayFrames;
+
+
     // 当前关卡
     int currentLevel;
 
@@ -108,10 +116,8 @@ private:
 
     SceneState sceneState;
 
-    QPushButton *btnLevel1;
-    QPushButton *btnLevel2;
-    QPushButton *btnLevel3;
-    QPushButton *btnLevel4;
+    QVector<QPushButton*> levelButtons;
+    int totalLevels;
     QPushButton *btnBackToMenu;
 };
 
