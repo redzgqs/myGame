@@ -1,5 +1,7 @@
 <RCC>
     <qresource prefix="/images">
         <file>background.png</file>
+        <file>fake.png</file>
+        <file>real.png</file>
     </qresource>
 </RCC>

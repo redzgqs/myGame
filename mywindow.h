@@ -70,6 +70,8 @@ private:
 private:
     QTimer *timer;
     QPixmap bg;
+    QPixmap realImg;
+    QPixmap fakeImg;
 
     QTimer *resetTimer;
     bool waitingReset;

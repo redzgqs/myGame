@@ -14,6 +14,8 @@ MyWindow::MyWindow(QWidget *parent)
     setFocusPolicy(Qt::StrongFocus);
 
     bg.load(":/images/background.png");
+    realImg.load(":/images/real.png");
+    fakeImg.load(":/images/fake.png");
 
     timer = new QTimer(this);
 
@@ -176,8 +178,6 @@ void MyWindow::resetGame()
 }
 
 
-
-
 void MyWindow::loadLevel(int level)
 {
     keyLeft = false;
@@ -207,22 +207,20 @@ void MyWindow::loadLevel(int level)
 
 
 
-
-
 void MyWindow::drawRole(QPainter &painter, const Role &role)
 {
     if (!role.alive || role.escaped)
         return;
 
+    QRect target(role.x, role.y, role.w, role.h);
+
     if (role.isCircle)
     {
-        painter.setBrush(Qt::blue);
-        painter.drawEllipse(role.x, role.y, role.w, role.h);
+        painter.drawPixmap(target, realImg);
     }
     else
     {
-        painter.setBrush(Qt::darkGreen);
-        painter.drawRect(role.x, role.y, role.w, role.h);
+        painter.drawPixmap(target, fakeImg);
     }
 }
 
