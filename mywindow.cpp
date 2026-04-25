@@ -17,14 +17,127 @@ MyWindow::MyWindow(QWidget *parent)
 
     timer = new QTimer(this);
 
+
+    resetTimer = new QTimer(this);
+    resetTimer->setSingleShot(true);
+    waitingReset = false;
+
+
+    setupUI();
     initGame();
 
     connect(timer, &QTimer::timeout, this, &MyWindow::updateGame);
     timer->start(16);
+
+    connect(resetTimer, &QTimer::timeout, this, [this]()
+            {
+                resetGame();
+                waitingReset = false;
+
+                if (sceneState == GameScene)
+                {
+                    timer->start(16);
+                }
+
+                update();
+            });
+
+
+
+    showMenu();
 }
 
 MyWindow::~MyWindow()
 {
+}
+
+void MyWindow::scheduleReset()
+{
+    if (waitingReset)
+        return;
+
+    waitingReset = true;
+    timer->stop();
+    resetTimer->start(1000);   // 1秒后重开
+}
+
+void MyWindow::setupUI()
+{
+    btnLevel1 = new QPushButton("第1关", this);
+    btnLevel2 = new QPushButton("第2关", this);
+    btnLevel3 = new QPushButton("第3关", this);
+    btnLevel4 = new QPushButton("第4关", this);
+    btnBackToMenu = new QPushButton("返回主界面", this);
+
+    btnLevel1->setGeometry(350, 180, 200, 50);
+    btnLevel2->setGeometry(350, 250, 200, 50);
+    btnLevel3->setGeometry(350, 320, 200, 50);
+    btnLevel4->setGeometry(350, 390, 200, 50);
+
+    btnBackToMenu->setGeometry(740, 20, 130, 40);
+
+    connect(btnLevel1, &QPushButton::clicked, this, [=]() { startLevel(1); });
+    connect(btnLevel2, &QPushButton::clicked, this, [=]() { startLevel(2); });
+    connect(btnLevel3, &QPushButton::clicked, this, [=]() { startLevel(3); });
+    connect(btnLevel4, &QPushButton::clicked, this, [=]() { startLevel(4); });
+
+    connect(btnBackToMenu, &QPushButton::clicked, this, [=]() { showMenu(); });
+
+    btnLevel1->setStyleSheet("font-size: 20px;");
+    btnLevel2->setStyleSheet("font-size: 20px;");
+    btnLevel3->setStyleSheet("font-size: 20px;");
+    btnLevel4->setStyleSheet("font-size: 20px;");
+    btnBackToMenu->setStyleSheet("font-size: 16px;");
+
+    updateUIVisibility();
+}
+
+void MyWindow::updateUIVisibility()
+{
+    bool inMenu = (sceneState == MenuScene);
+    bool inGame = (sceneState == GameScene);
+
+    if (btnLevel1) btnLevel1->setVisible(inMenu);
+    if (btnLevel2) btnLevel2->setVisible(inMenu);
+    if (btnLevel3) btnLevel3->setVisible(inMenu);
+    if (btnLevel4) btnLevel4->setVisible(inMenu);
+    if (btnBackToMenu) btnBackToMenu->setVisible(inGame);
+}
+
+void MyWindow::showMenu()
+{
+    sceneState = MenuScene;
+
+    keyLeft = false;
+    keyRight = false;
+    keyUp = false;
+
+    if (resetTimer && resetTimer->isActive())
+        resetTimer->stop();
+
+    waitingReset = false;
+
+    if (timer)
+        timer->stop();
+
+    updateUIVisibility();
+    update();
+}
+
+void MyWindow::startLevel(int level)
+{
+    currentLevel = level;
+    loadLevel(currentLevel);
+
+    sceneState = GameScene;
+
+    keyLeft = false;
+    keyRight = false;
+    keyUp = false;
+
+    updateUIVisibility();
+    timer->start(16);
+    update();
 }
 
 void MyWindow::initGame()
@@ -34,12 +147,15 @@ void MyWindow::initGame()
     keyUp = false;
 
     moveSpeed = 5;
-    jumpSpeed = 19;
+    jumpSpeed = 20;
     gravity = 1;
 
     currentLevel = 1;
     loadLevel(currentLevel);
+
+    sceneState = MenuScene;
 }
+
 
 void MyWindow::resetGame()
 {
@@ -48,6 +164,19 @@ void MyWindow::resetGame()
     keyUp = false;
 
     loadLevel(currentLevel);
+}
+
+void MyWindow::killCircleAndReset(int index)
+{
+    if (index < 0 || index >= circles.size())
+        return;
+
+    circles[index].alive = false;
+    circles[index].vx = 0;
+    circles[index].vy = 0;
+
+    update();          // 先刷新一帧，让圆消失
+    scheduleReset();   // 再延迟重开
 }
 
 
@@ -79,10 +208,12 @@ void MyWindow::nextLevel()
 {
     currentLevel++;
 
-    if (currentLevel > 3)
+    if (currentLevel > 4)
     {
-        currentLevel = 1;
         QMessageBox::information(this, "游戏完成", "恭喜你完成了全部关卡！");
+        currentLevel = 1;
+        showMenu();
+        return;
     }
 
     loadLevel(currentLevel);
@@ -273,6 +404,20 @@ void MyWindow::paintEvent(QPaintEvent *event)
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing, true);
 
+    if (sceneState == MenuScene)
+    {
+        painter.drawPixmap(rect(), bg);
+
+        painter.setPen(Qt::white);
+        painter.setFont(QFont("Arial", 28, QFont::Bold));
+        painter.drawText(rect(), Qt::AlignTop | Qt::AlignHCenter, "Shape Puzzle");
+
+        painter.setFont(QFont("Arial", 16));
+        painter.drawText(0, 100, width(), 40, Qt::AlignHCenter, "请选择关卡");
+
+        return;
+    }
+
     // 背景
     painter.drawPixmap(rect(), bg);
 
@@ -319,6 +464,10 @@ void MyWindow::paintEvent(QPaintEvent *event)
     painter.setFont(QFont("Arial", 14, QFont::Bold));
     painter.drawText(20, 30, QString("Level %1").arg(currentLevel));
 
+    if (waitingReset)
+    {
+        painter.fillRect(rect(), QColor(0, 0, 0, 100));
+    }
 }
 
 void MyWindow::keyPressEvent(QKeyEvent *event)
@@ -386,6 +535,12 @@ bool MyWindow::allCirclesEscaped() const
 
 void MyWindow::updateGame()
 {
+    if (sceneState != GameScene || waitingReset)
+    {
+        update();
+        return;
+    }
+
     int dir = 0;
     if (keyLeft && !keyRight)
         dir = -1;
@@ -405,11 +560,26 @@ void MyWindow::updateGame()
     }
 
     // 圆和方块重叠：失败重开
-    if (circlesHitSquares())
+    for (int i = 0; i < circles.size(); i++)
     {
-        resetGame();
-        update();
-        return;
+        if (!circles[i].alive || circles[i].escaped)
+            continue;
+
+        QRect cRect = roleRect(circles[i]);
+
+        for (int j = 0; j < squares.size(); j++)
+        {
+            if (!squares[j].alive)
+                continue;
+
+            QRect sRect = roleRect(squares[j]);
+
+            if (cRect.intersects(sRect))
+            {
+                killCircleAndReset(i);
+                return;
+            }
+        }
     }
 
     // 圆碰刺：失败重开
@@ -417,8 +587,7 @@ void MyWindow::updateGame()
     {
         if (circles[i].alive && !circles[i].escaped && roleHitSpike(circles[i]))
         {
-            resetGame();
-            update();
+            killCircleAndReset(i);
             return;
         }
     }
@@ -457,7 +626,7 @@ void MyWindow::updateGame()
         {
             timer->stop();
 
-            if (currentLevel < 3)
+            if (currentLevel < 4)
             {
                 QMessageBox::information(this, "过关", QString("第 %1 关完成！").arg(currentLevel));
             }

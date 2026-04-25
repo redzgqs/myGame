@@ -9,8 +9,15 @@
 #include <QVector>
 #include <QPoint>
 #include <QRect>
+#include <QPushButton>
 #include "gameobjects.h"
 
+
+enum SceneState
+{
+    MenuScene,
+    GameScene
+};
 
 class MyWindow : public QWidget
 {
@@ -48,9 +55,22 @@ private:
 
     bool allCirclesEscaped() const;
 
+    void setupUI();
+    void showMenu();
+    void startLevel(int level);
+    void updateUIVisibility();
+
+    void scheduleReset();
+
+    void killCircleAndReset(int index);
+
+
 private:
     QTimer *timer;
     QPixmap bg;
+
+    QTimer *resetTimer;
+    bool waitingReset;
 
     // 按键状态
     bool keyLeft;
@@ -84,6 +104,15 @@ private:
     int moveSpeed;
     int jumpSpeed;
     int gravity;
+
+
+    SceneState sceneState;
+
+    QPushButton *btnLevel1;
+    QPushButton *btnLevel2;
+    QPushButton *btnLevel3;
+    QPushButton *btnLevel4;
+    QPushButton *btnBackToMenu;
 };
 
 #endif // MYWINDOW_H
