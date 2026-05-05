@@ -72,6 +72,12 @@ private:
     QPixmap bg;
     QPixmap realImg;
     QPixmap fakeImg;
+    QPixmap menuLeftImg;
+    QPixmap menuRightImg;
+    QPixmap doorClosedImg;
+    QPixmap doorOpenImg;
+    QPixmap spikeStaticImg;
+    QPixmap spikeMovingImg;
 
     QTimer *resetTimer;
     bool waitingReset;
@@ -105,6 +111,7 @@ private:
 
     // 门
     bool doorOpen;
+    bool doorOpenAtStart;
     int doorX;
     int doorY;
     int doorW;

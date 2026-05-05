@@ -341,7 +341,7 @@ void MyWindow::updateGame()
     }
 
     // 所有方块都死了，门打开
-    doorOpen = allSquaresDead();
+    doorOpen = doorOpenAtStart || allSquaresDead();
 
     // all活着的圆进入门：进入下一关
     if (doorOpen)

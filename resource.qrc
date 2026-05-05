@@ -1,7 +1,13 @@
 <RCC>
     <qresource prefix="/images">
-        <file>background.png</file>
-        <file>fake.png</file>
-        <file>real.png</file>
+        <file alias="background.png">images/background.png</file>
+        <file alias="real.png">images/real.png</file>
+        <file alias="fake.png">images/fake.png</file>
+        <file alias="door_closed.png">images/door_closed.png</file>
+        <file alias="door_open.png">images/door_open.png</file>
+        <file alias="spike_static.png">images/spike_static.png</file>
+        <file alias="spike_moving.png">images/spike_moving.png</file>
+        <file alias="menu_left.png">images/menu_left.png</file>
+        <file alias="menu_right.png">images/menu_right.png</file>
     </qresource>
 </RCC>

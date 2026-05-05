@@ -16,6 +16,12 @@ MyWindow::MyWindow(QWidget *parent)
     bg.load(":/images/background.png");
     realImg.load(":/images/real.png");
     fakeImg.load(":/images/fake.png");
+    menuLeftImg.load(":/images/menu_left.png");
+    menuRightImg.load(":/images/menu_right.png");
+    doorClosedImg.load(":/images/door_closed.png");
+    doorOpenImg.load(":/images/door_open.png");
+    spikeStaticImg.load(":/images/spike_static.png");
+    spikeMovingImg.load(":/images/spike_moving.png");
 
     timer = new QTimer(this);
 
@@ -59,17 +65,17 @@ void MyWindow::setupUI()
 {
     levelButtons.clear();
 
-    int btnW = 140;
+    int btnW = 70;
     int btnH = 50;
-    int startX = 180;
-    int startY = 180;
-    int gapX = 160;
-    int gapY = 80;
+    int startX = 330;
+    int startY = 230;
+    int gapX = 90;
+    int gapY = 70;
     int columns = 3;
 
     for (int i = 0; i < totalLevels; i++)
     {
-        QPushButton *btn = new QPushButton(QString("第%1关").arg(i + 1), this);
+        QPushButton *btn = new QPushButton(QString::number(i + 1), this);
 
         int row = i / columns;
         int col = i % columns;
@@ -78,7 +84,11 @@ void MyWindow::setupUI()
         int y = startY + row * gapY;
 
         btn->setGeometry(x, y, btnW, btnH);
-        btn->setStyleSheet("font-size: 18px;");
+        btn->setStyleSheet(
+            "font-size: 20px;"
+            "font-weight: bold;"
+            "border-radius: 10px;"
+            );
 
         connect(btn, &QPushButton::clicked, this, [=]()
                 {
@@ -199,7 +209,8 @@ void MyWindow::loadLevel(int level)
     doorX = data.doorX;
     doorY = data.doorY;
 
-    doorOpen = data.doorOpenAtStart;
+    doorOpenAtStart = data.doorOpenAtStart;
+    doorOpen = doorOpenAtStart;
 
     movingSpikesStarted = false;
     movingSpikeDelayFrames = 0;
@@ -236,12 +247,26 @@ void MyWindow::paintEvent(QPaintEvent *event)
     {
         painter.drawPixmap(rect(), bg);
 
+        // 左侧图片
+        if (!menuLeftImg.isNull())
+        {
+            QRect leftRect(60, 259, 210, 270);
+            painter.drawPixmap(leftRect, menuLeftImg);
+        }
+
+        // 右侧图片
+        if (!menuRightImg.isNull())
+        {
+            QRect rightRect(660, 215, 180, 320);
+            painter.drawPixmap(rightRect, menuRightImg);
+        }
+
         painter.setPen(Qt::white);
         painter.setFont(QFont("Arial", 28, QFont::Bold));
-        painter.drawText(rect(), Qt::AlignTop | Qt::AlignHCenter, "Shape Puzzle");
+        painter.drawText(0, 50, width(), 50, Qt::AlignHCenter, "我才是奶龙");
 
         painter.setFont(QFont("Arial", 16));
-        painter.drawText(0, 100, width(), 40, Qt::AlignHCenter, "请选择关卡");
+        painter.drawText(0, 115, width(), 40, Qt::AlignHCenter, "请选择关卡");
 
         return;
     }
@@ -257,16 +282,48 @@ void MyWindow::paintEvent(QPaintEvent *event)
     }
 
     // 刺
-    painter.setBrush(Qt::red);
     for (int i = 0; i < spikes.size(); i++)
     {
-        QPolygon spikePoly;
-        spikePoly << spikes[i].a << spikes[i].b << spikes[i].c;
-        painter.drawPolygon(spikePoly);
+        int left   = spikes[i].a.x();
+        int top    = spikes[i].b.y();
+        int width  = spikes[i].c.x() - spikes[i].a.x();
+        int height = spikes[i].a.y() - spikes[i].b.y();
+
+        QRect target(left, top-4, width, height+4);
+
+        if (!spikeStaticImg.isNull())
+        {
+            painter.drawPixmap(target, spikeStaticImg);
+        }
+        else
+        {
+            // 图片没加载成功时，仍然退回到原来的三角形绘制
+            painter.setBrush(Qt::red);
+            QPolygon spikePoly;
+            spikePoly << spikes[i].a << spikes[i].b << spikes[i].c;
+            painter.drawPolygon(spikePoly);
+        }
+    }
+
+    // 门
+    QRect doorRect(doorX, doorY, doorW, doorH);
+
+    if (doorOpen)
+    {
+        if (!doorOpenImg.isNull())
+            painter.drawPixmap(doorRect, doorOpenImg);
+        else
+            painter.drawRect(doorRect);
+    }
+    else
+    {
+        if (!doorClosedImg.isNull())
+            painter.drawPixmap(doorRect, doorClosedImg);
+        else
+            painter.drawRect(doorRect);
     }
 
     // 画移动刺
-    painter.setBrush(QColor(255, 140, 0));   // 橙色，和静态红刺区分
     for (int i = 0; i < movingSpikes.size(); i++)
     {
         for (int j = 0; j < movingSpikes[i].count; j++)
@@ -275,14 +332,25 @@ void MyWindow::paintEvent(QPaintEvent *event)
             int sy = movingSpikes[i].y;
             int h  = movingSpikes[i].height;
 
-            QPolygon spikePoly;
-            spikePoly << QPoint(sx, sy)
-                      << QPoint(sx + 10, sy - h)
-                      << QPoint(sx + 20, sy);
+            QRect target(sx, sy - h, 20, h);
 
-            painter.drawPolygon(spikePoly);
+            if (!spikeMovingImg.isNull())
+            {
+                painter.drawPixmap(target, spikeMovingImg);
+            }
+            else
+            {
+                painter.setBrush(QColor(255, 140, 0));
+                QPolygon spikePoly;
+                spikePoly << QPoint(sx, sy)
+                          << QPoint(sx + 10, sy - h)
+                          << QPoint(sx + 20, sy);
+
+                painter.drawPolygon(spikePoly);
+            }
         }
     }
+
 
     // 画所有圆
     for (int i = 0; i < circles.size(); i++)
@@ -296,15 +364,7 @@ void MyWindow::paintEvent(QPaintEvent *event)
         drawRole(painter, squares[i]);
     }
 
-    // 门
-    if (doorOpen)
-    {
-        painter.setBrush(QColor(139, 69, 19));
-        painter.drawRect(doorX, doorY, doorW, doorH);
 
-        painter.setBrush(Qt::yellow);
-        painter.drawEllipse(doorX + doorW - 12, doorY + doorH / 2, 6, 6);
-    }
 
     // 关卡
     painter.setPen(Qt::white);

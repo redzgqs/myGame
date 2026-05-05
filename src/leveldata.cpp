@@ -8,9 +8,9 @@ LevelData buildLevelData(int level, int windowWidth)
 
     data.groundY = 524;
 
-    data.doorW = 50;
-    data.doorH = 80;
-    data.doorX = 820;
+    data.doorW = 40;
+    data.doorH = 60;
+    data.doorX = windowWidth - 20 - data.doorW;
     data.doorY = data.groundY - data.doorH;
 
     auto makeRole = [&](int x, int y, bool isCircle)
@@ -144,15 +144,17 @@ LevelData buildLevelData(int level, int windowWidth)
         addSpike(QPoint(580, data.groundY), QPoint(600, data.groundY - 30), QPoint(620, data.groundY));
         addSpike(QPoint(620, data.groundY), QPoint(640, data.groundY - 30), QPoint(660, data.groundY));
 
-        data.doorX = 820;
+        data.doorW = 40;
+        data.doorH = 60;
+        data.doorX = windowWidth - 20 - data.doorW;
         data.doorY = data.groundY - data.doorH;
     }
     else if (level == 4)
     {
         // 门放回最右下角
-        data.doorW = 50;
-        data.doorH = 80;
-        data.doorX = 820;
+        data.doorW = 40;
+        data.doorH = 60;
+        data.doorX = windowWidth - 20 - data.doorW;
         data.doorY = data.groundY - data.doorH;
 
         // =========================
@@ -192,8 +194,6 @@ LevelData buildLevelData(int level, int windowWidth)
 
         // =========================
         // 方块：全部放在台阶正中间
-        // 方块宽度是40，所以居中公式是 x + (stairW - 40) / 2
-        // =========================
         int centerOffset = (stairW - 40) / 2;
 
         data.squares.append(makeRole(x1 + centerOffset, y1 - 40, false));
@@ -226,9 +226,9 @@ LevelData buildLevelData(int level, int windowWidth)
         // 门仍然在右下角
         // =========================
 
-        data.doorW = 50;
-        data.doorH = 80;
-        data.doorX = 820;
+        data.doorW = 40;
+        data.doorH = 60;
+        data.doorX = windowWidth - 20 - data.doorW;
         data.doorY = data.groundY - data.doorH;
 
         // -------------------------
@@ -289,9 +289,9 @@ LevelData buildLevelData(int level, int windowWidth)
         // 第6关：移动刺
         // 一个圆，没有方块，门一开始就开着
 
-        data.doorW = 50;
-        data.doorH = 80;
-        data.doorX = 820;
+        data.doorW = 40;
+        data.doorH = 60;
+        data.doorX = windowWidth - 20 - data.doorW;
         data.doorY = data.groundY - data.doorH;
         data.doorOpenAtStart = true;
 
@@ -301,9 +301,9 @@ LevelData buildLevelData(int level, int windowWidth)
         // 三个移动刺，初始都向左移动
         // count = 2 表示每个移动刺由两个小三角组成
         // rightBound 设成 780，避免它们直接堵住最右边门口
-        addMovingSpike(220, data.groundY, 2, -5, 0, 780, 36);
-        addMovingSpike(500, data.groundY, 2, -5, 0, 780, 36);
-        addMovingSpike(780, data.groundY, 2, -5, 0, 780, 36);
+        addMovingSpike(220, data.groundY, 2, -5, 0, windowWidth, 36);
+        addMovingSpike(500, data.groundY, 2, -5, 0, windowWidth, 36);
+        addMovingSpike(780, data.groundY, 2, -5, 0, windowWidth, 36);
     }
 
     return data;

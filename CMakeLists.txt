@@ -21,16 +21,18 @@ set(PROJECT_SOURCES
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(1
-        main.cpp
-        mywindow.cpp
-        mywindow_logic.cpp
-        mywindow.h
-        mywindow.ui
+        src/main.cpp
+        src/mywindow.cpp
+        src/mywindow_logic.cpp
+        src/leveldata.cpp
+        include/mywindow.h
+        include/gameobjects.h
+        include/leveldata.h
         resource.qrc
-        leveldata.cpp
-        leveldata.h
-        gameobjects.h
+        mywindow.ui
     )
+
+target_include_directories(1 PRIVATE include)
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET 1 APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
 #                 ${CMAKE_CURRENT_SOURCE_DIR}/android)
