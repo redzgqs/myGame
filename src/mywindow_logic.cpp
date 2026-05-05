@@ -2,6 +2,18 @@
 #include <QMessageBox>
 #include <cmath>
 
+void MyWindow::scheduleNextLevel()
+{
+    if (waitingNextLevel)
+        return;
+
+    waitingNextLevel = true;
+    timer->stop();
+
+    update();              // 关键：立刻请求重绘
+    clearTimer->start(1000);
+}
+
 QRect MyWindow::roleRect(const Role &role) const
 {
     return QRect((int)std::round(role.x),
@@ -145,6 +157,17 @@ bool MyWindow::roleHitSpike(const Role &role)
         }
     }
 
+    // 隐藏刺（只有 visible == true 才判定）
+    for (int i = 0; i < hiddenSpikes.size(); i++)
+    {
+        if (!hiddenSpikes[i].visible)
+            continue;
+
+        if (pointInTriangle(p1, hiddenSpikes[i].a, hiddenSpikes[i].b, hiddenSpikes[i].c)) return true;
+        if (pointInTriangle(p2, hiddenSpikes[i].a, hiddenSpikes[i].b, hiddenSpikes[i].c)) return true;
+        if (pointInTriangle(p3, hiddenSpikes[i].a, hiddenSpikes[i].b, hiddenSpikes[i].c)) return true;
+    }
+
     return false;
 }
 
@@ -222,11 +245,9 @@ void MyWindow::nextLevel()
 {
     currentLevel++;
 
-    if (currentLevel > 7)
+    if (currentLevel > 9)
     {
-        QMessageBox::information(this, "游戏完成", "恭喜你完成了全部关卡！");
-        currentLevel = 1;
-        showMenu();
+        showFinishScene();
         return;
     }
 
@@ -255,9 +276,32 @@ void MyWindow::updateMovingSpikes()
     }
 }
 
+void MyWindow::updateHiddenSpikes()
+{
+    for (int i = 0; i < hiddenSpikes.size(); i++)
+    {
+        if (hiddenSpikes[i].visible)
+            continue;
+
+        for (int j = 0; j < circles.size(); j++)
+        {
+            if (!circles[j].alive || circles[j].escaped)
+                continue;
+
+            if (roleRect(circles[j]).intersects(hiddenSpikes[i].triggerRect))
+            {
+                hiddenSpikes[i].visible = true;
+                return;   // 一次触发一个就够了
+            }
+        }
+    }
+}
+
+
+
 void MyWindow::updateGame()
 {
-    if (sceneState != GameScene || waitingReset)
+    if (sceneState != GameScene || waitingReset || waitingNextLevel)
     {
         update();
         return;
@@ -329,6 +373,8 @@ void MyWindow::updateGame()
             jumpBufferFrames--;
     }
 
+    updateHiddenSpikes();
+
     // 圆和方块重叠：失败重开
     for (int i = 0; i < circles.size(); i++)
     {
@@ -379,7 +425,6 @@ void MyWindow::updateGame()
     {
         QRect doorRect(doorX, doorY, doorW, doorH);
 
-        // 先检查有没有圆进入门
         for (int i = 0; i < circles.size(); i++)
         {
             if (circles[i].alive && !circles[i].escaped)
@@ -391,20 +436,18 @@ void MyWindow::updateGame()
             }
         }
 
-        // 所有圆都进门后，才真正通关
         if (allCirclesEscaped())
         {
-            timer->stop();
-
-            if (currentLevel < 5)
+            // 最后一关：仍然进入最终通关界面
+            if (currentLevel >= totalLevels)
             {
-                QMessageBox::information(this, "过关", QString("第 %1 关完成！").arg(currentLevel));
+                showFinishScene();
+            }
+            else
+            {
+                scheduleNextLevel();
             }
 
-            nextLevel();
-
-            timer->start(16);
-            update();
             return;
         }
     }

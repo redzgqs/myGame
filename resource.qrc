@@ -9,5 +9,8 @@
         <file alias="spike_moving.png">images/spike_moving.png</file>
         <file alias="menu_left.png">images/menu_left.png</file>
         <file alias="menu_right.png">images/menu_right.png</file>
+	<file alias="finish_nailong.png">images/finish_nailong.png</file>
+	<file alias="fail_nailong.png">images/fail_nailong.png</file>
+	<file alias="level_clear.png">images/level_clear.png</file>
     </qresource>
 </RCC>

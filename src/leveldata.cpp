@@ -61,6 +61,17 @@ LevelData buildLevelData(int level, int windowWidth)
         data.movingSpikes.append(m);
     };
 
+    auto addHiddenSpike = [&](QPoint a, QPoint b, QPoint c, QRect triggerRect)
+    {
+        HiddenSpike h;
+        h.a = a;
+        h.b = b;
+        h.c = c;
+        h.triggerRect = triggerRect;
+        h.visible = false;
+        data.hiddenSpikes.append(h);
+    };
+
 
     // =========================
     // 第1关
@@ -160,7 +171,7 @@ LevelData buildLevelData(int level, int windowWidth)
         // =========================
         // 可调参数
         // =========================
-        int stairW = 60;   // 台阶宽度
+        int stairW = 45;   // 台阶宽度
         int gap    = 55;   // 台阶间距
 
         int x1 = 120;
@@ -368,5 +379,67 @@ LevelData buildLevelData(int level, int windowWidth)
         addSpike(QPoint(710, 390), QPoint(720, 362), QPoint(730, 390));
         addSpike(QPoint(730, 390), QPoint(740, 362), QPoint(750, 390));
     }
+    else if (level == 8)
+    {
+        // =========================
+        // 第8关：隐藏双刺
+        // 圆在最左边，门在最右边
+        // 门一开始就开着
+        // =========================
+
+        data.doorW = 40;
+        data.doorH = 60;
+        data.doorX = windowWidth - 20 - data.doorW;
+        data.doorY = data.groundY - data.doorH;
+        data.doorOpenAtStart = true;
+
+        // 一个圆，最左边
+        data.circles.append(makeRole(40, data.groundY - 40, true));
+
+        // 隐藏双刺：和 level 1 类似，两根并排
+        int hx = 470;
+
+        // 触发范围就按这组双刺的整体范围来
+        QRect trigger(hx, data.groundY - 30, 80, 30);
+
+        addHiddenSpike(
+            QPoint(hx, data.groundY),
+            QPoint(hx + 20, data.groundY - 30),
+            QPoint(hx + 40, data.groundY),
+            trigger
+            );
+
+        addHiddenSpike(
+            QPoint(hx + 40, data.groundY),
+            QPoint(hx + 60, data.groundY - 30),
+            QPoint(hx + 80, data.groundY),
+            trigger
+            );
+    }
+    else if (level == 9)
+    {
+        // =========================
+        // 第9关：最终收尾关
+        // 没有方块、没有刺、门一开始就是开的
+        // 一排很多圆，全部进门就通关
+        // =========================
+
+        data.doorW = 40;
+        data.doorH = 60;
+        data.doorX = windowWidth - 20 - data.doorW;
+        data.doorY = data.groundY - data.doorH;
+        data.doorOpenAtStart = true;
+
+        // 一排很多真奶龙，铺满地面，直到门前
+        int startX = 20;                 // 最左起点
+        int spacing = 45;                // 相邻圆之间的间距
+        int endX = data.doorX - 50;      // 门前留一点空间
+
+        for (int x = startX; x <= endX; x += spacing)
+        {
+            data.circles.append(makeRole(x, data.groundY - 40, true));
+        }
+    }
+
     return data;
 }

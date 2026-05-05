@@ -22,6 +22,25 @@ MyWindow::MyWindow(QWidget *parent)
     doorOpenImg.load(":/images/door_open.png");
     spikeStaticImg.load(":/images/spike_static.png");
     spikeMovingImg.load(":/images/spike_moving.png");
+    finishNailongImg.load(":/images/finish_nailong.png");
+    failNailongImg.load(":/images/fail_nailong.png");
+
+    clearTimer = new QTimer(this);
+    clearTimer->setSingleShot(true);
+    waitingNextLevel = false;
+
+    levelClearImg.load(":/images/level_clear.png");
+
+    connect(clearTimer, &QTimer::timeout, this, [this]()
+            {
+                waitingNextLevel = false;
+                nextLevel();
+
+                if (sceneState == GameScene)
+                    timer->start(16);
+
+                update();
+            });
 
     timer = new QTimer(this);
 
@@ -30,7 +49,7 @@ MyWindow::MyWindow(QWidget *parent)
     resetTimer->setSingleShot(true);
     waitingReset = false;
 
-    totalLevels = 7;
+    totalLevels = 9;
     setupUI();
     initGame();
 
@@ -114,6 +133,7 @@ void MyWindow::updateUIVisibility()
 {
     bool inMenu = (sceneState == MenuScene);
     bool inGame = (sceneState == GameScene);
+    bool inFinish = (sceneState == FinishScene);
 
     for (int i = 0; i < levelButtons.size(); i++)
     {
@@ -122,7 +142,7 @@ void MyWindow::updateUIVisibility()
     }
 
     if (btnBackToMenu)
-        btnBackToMenu->setVisible(inGame);
+        btnBackToMenu->setVisible(inGame || inFinish);
 }
 
 void MyWindow::showMenu()
@@ -138,8 +158,19 @@ void MyWindow::showMenu()
 
     waitingReset = false;
 
+    if (clearTimer && clearTimer->isActive())
+        clearTimer->stop();
+
+    waitingNextLevel = false;
+
     if (timer)
         timer->stop();
+
+    if (btnBackToMenu)
+    {
+        btnBackToMenu->setText("返回主界面");
+        btnBackToMenu->setGeometry(730, 20, 140, 40);
+    }
 
     updateUIVisibility();
     update();
@@ -147,6 +178,7 @@ void MyWindow::showMenu()
 
 void MyWindow::startLevel(int level)
 {
+    waitingNextLevel = false;
     currentLevel = level;
     loadLevel(currentLevel);
 
@@ -155,6 +187,12 @@ void MyWindow::startLevel(int level)
     keyLeft = false;
     keyRight = false;
     keyUp = false;
+
+    if (btnBackToMenu)
+    {
+        btnBackToMenu->setText("返回主界面");
+        btnBackToMenu->setGeometry(730, 20, 140, 40);
+    }
 
     updateUIVisibility();
     timer->start(16);
@@ -203,6 +241,7 @@ void MyWindow::loadLevel(int level)
     spikes = data.spikes;
     blocks = data.blocks;
     movingSpikes = data.movingSpikes;
+    hiddenSpikes = data.hiddenSpikes;
 
     groundY = data.groundY;
 
@@ -216,6 +255,8 @@ void MyWindow::loadLevel(int level)
 
     movingSpikesStarted = false;
     movingSpikeDelayFrames = 0;
+
+    waitingNextLevel = false;
 }
 
 
@@ -264,11 +305,35 @@ void MyWindow::paintEvent(QPaintEvent *event)
         }
 
         painter.setPen(Qt::white);
-        painter.setFont(QFont("Arial", 28, QFont::Bold));
+        painter.setFont(QFont("幼圆", 28, QFont::Bold));
         painter.drawText(0, 50, width(), 50, Qt::AlignHCenter, "我才是奶龙");
 
-        painter.setFont(QFont("Arial", 16));
-        painter.drawText(0, 115, width(), 40, Qt::AlignHCenter, "请选择关卡");
+        painter.setFont(QFont("幼圆", 16));
+        painter.drawText(0, 115, width(), 40, Qt::AlignHCenter, "关卡");
+
+        return;
+    }
+    if (sceneState == FinishScene)
+    {
+        painter.drawPixmap(rect(), bg);
+
+        // 稍微加一层暗色遮罩
+        painter.fillRect(rect(), QColor(0, 0, 0, 90));
+
+        // 画奶龙图片
+        if (!finishNailongImg.isNull())
+        {
+            QRect imgRect(300, 110, 280, 300);
+            painter.drawPixmap(imgRect, finishNailongImg);
+        }
+
+        // 文案
+        painter.setPen(Qt::white);
+        painter.setFont(QFont("幼圆", 28, QFont::Bold));
+        painter.drawText(0, 40, width(), 50, Qt::AlignHCenter, "谢谢你");
+
+        painter.setFont(QFont("幼圆", 22, QFont::Bold));
+        painter.drawText(0, 420, width(), 40, Qt::AlignHCenter, "你拯救了奶龙！");
 
         return;
     }
@@ -353,6 +418,31 @@ void MyWindow::paintEvent(QPaintEvent *event)
         }
     }
 
+    // 画隐藏刺（只有触发后才显示）
+    for (int i = 0; i < hiddenSpikes.size(); i++)
+    {
+        if (!hiddenSpikes[i].visible)
+            continue;
+
+        int left   = hiddenSpikes[i].a.x();
+        int top    = hiddenSpikes[i].b.y();
+        int width  = hiddenSpikes[i].c.x() - hiddenSpikes[i].a.x();
+        int height = hiddenSpikes[i].a.y() - hiddenSpikes[i].b.y();
+
+        QRect target(left, top, width, height);
+
+        if (!spikeStaticImg.isNull())
+        {
+            painter.drawPixmap(target, spikeStaticImg);
+        }
+        else
+        {
+            QPolygon spikePoly;
+            spikePoly << hiddenSpikes[i].a << hiddenSpikes[i].b << hiddenSpikes[i].c;
+            painter.drawPolygon(spikePoly);
+        }
+    }
+
 
     // 画所有圆
     for (int i = 0; i < circles.size(); i++)
@@ -373,9 +463,39 @@ void MyWindow::paintEvent(QPaintEvent *event)
     painter.setFont(QFont("Arial", 14, QFont::Bold));
     painter.drawText(20, 30, QString("Level %1").arg(currentLevel));
 
+
+
     if (waitingReset)
     {
-        painter.fillRect(rect(), QColor(0, 0, 0, 100));
+        // 先变暗
+        painter.fillRect(rect(), QColor(0, 0, 0, 120));
+
+        // 再画失败奶龙图
+        if (!failNailongImg.isNull())
+        {
+            QRect failImgRect(290, 120, 320, 360);
+            painter.drawPixmap(failImgRect, failNailongImg);
+        }
+
+        // 再加一句字
+        painter.setPen(Qt::white);
+        painter.setFont(QFont("Arial", 24, QFont::Bold));
+        painter.drawText(0, 500, width(), 40, Qt::AlignHCenter, "哈哈哈哈");
+    }
+
+    if (waitingNextLevel)
+    {
+        painter.fillRect(rect(), QColor(0, 0, 0, 120));
+
+        if (!levelClearImg.isNull())
+        {
+            QRect clearImgRect(300, 120, 280, 300);
+            painter.drawPixmap(clearImgRect, levelClearImg);
+        }
+
+        painter.setPen(Qt::white);
+        painter.setFont(QFont("Arial", 24, QFont::Bold));
+        painter.drawText(0, 455, width(), 40, Qt::AlignHCenter, "牛福");
     }
 }
 
@@ -412,5 +532,31 @@ void MyWindow::keyReleaseEvent(QKeyEvent *event)
         keyUp = false;
 }
 
+
+void MyWindow::showFinishScene()
+{
+    sceneState = FinishScene;
+
+    keyLeft = false;
+    keyRight = false;
+    keyUp = false;
+
+    if (timer)
+        timer->stop();
+
+    if (resetTimer && resetTimer->isActive())
+        resetTimer->stop();
+
+    waitingReset = false;
+
+    if (btnBackToMenu)
+    {
+        btnBackToMenu->setText("返回主界面");
+        btnBackToMenu->setGeometry(360, 500, 180, 45);
+    }
+
+    updateUIVisibility();
+    update();
+}
 
 

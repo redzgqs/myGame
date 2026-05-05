@@ -20,6 +20,8 @@ struct LevelData
     int doorH;
 
     bool doorOpenAtStart;
+
+    QVector<HiddenSpike> hiddenSpikes;
 };
 
 LevelData buildLevelData(int level, int windowWidth);

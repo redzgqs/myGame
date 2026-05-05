@@ -16,7 +16,8 @@
 enum SceneState
 {
     MenuScene,
-    GameScene
+    GameScene,
+    FinishScene
 };
 
 class MyWindow : public QWidget
@@ -66,6 +67,12 @@ private:
 
     void updateMovingSpikes();
 
+    void updateHiddenSpikes();
+
+    void showFinishScene();
+
+    void scheduleNextLevel();
+
 
 private:
     QTimer *timer;
@@ -78,6 +85,10 @@ private:
     QPixmap doorOpenImg;
     QPixmap spikeStaticImg;
     QPixmap spikeMovingImg;
+    QPixmap finishNailongImg;
+    QPixmap failNailongImg;
+    QPixmap levelClearImg;
+
 
     QTimer *resetTimer;
     bool waitingReset;
@@ -95,6 +106,8 @@ private:
 
     // 所有刺
     QVector<Spike> spikes;
+
+    QVector<HiddenSpike> hiddenSpikes;
 
     // block
     QVector<Block> blocks;
@@ -129,6 +142,9 @@ private:
     QVector<QPushButton*> levelButtons;
     int totalLevels;
     QPushButton *btnBackToMenu;
+
+    QTimer *clearTimer;
+    bool waitingNextLevel;
 };
 
 #endif // MYWINDOW_H

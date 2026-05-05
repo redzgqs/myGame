@@ -2,6 +2,7 @@
 #define GAMEOBJECTS_H
 
 #include <QPoint>
+#include <QRect>
 
 struct Role
 {
@@ -41,6 +42,15 @@ struct MovingSpike
     int leftBound;
     int rightBound;
     int height;   // 新增：移动刺高度
+};
+
+struct HiddenSpike
+{
+    QPoint a;
+    QPoint b;
+    QPoint c;
+    QRect triggerRect;   // 进入这个范围就触发
+    bool visible;        // 是否已经出现
 };
 
 #endif // GAMEOBJECTS_H
