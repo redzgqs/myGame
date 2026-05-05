@@ -9,10 +9,16 @@
 
 天呐，快来帮帮奶龙！
 
+![奶龙](images/menu_right.png)
+
+![奶龙](images/menu_left.png)
+
 ## 玩法
 冒牌的奶龙会模仿奶龙的全部动作！
 
 现在，你能够控制所有的奶龙一起移动，但素你要消灭冒牌的奶龙，保护好真的奶龙，才能通关噢！ 
+
+![主界面](images/image1.png)
 
 ## 操作方式
 - 左/右方向键：向左或向右移动
@@ -25,22 +31,4 @@
 
 不管了，你玩了就知道了。。。
 
-## 项目结构
-```text
-项目根目录
-│  CMakeLists.txt
-│  resource.qrc
-│
-├─src
-│      main.cpp
-│      mywindow.cpp
-│      mywindow_logic.cpp
-│      leveldata.cpp
-│
-├─include
-│      mywindow.h
-│      gameobjects.h
-│      leveldata.h
-│
-└─images
-       背景、角色、门、地刺、主菜单图片等资源文件
+怎么直接玩呢？：下载zip->dist->I_am_nailong.exe
