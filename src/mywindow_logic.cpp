@@ -438,15 +438,10 @@ void MyWindow::updateGame()
 
         if (allCirclesEscaped())
         {
-            // 最后一关：仍然进入最终通关界面
             if (currentLevel >= totalLevels)
-            {
                 showFinishScene();
-            }
             else
-            {
                 scheduleNextLevel();
-            }
 
             return;
         }
