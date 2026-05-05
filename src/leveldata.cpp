@@ -126,7 +126,7 @@ LevelData buildLevelData(int level, int windowWidth)
     // =========================
     else if (level == 3)
     {
-        addBlock(0, 250, windowWidth, 45);
+        addBlock(0, 250, windowWidth, 20);
 
         data.squares.append(makeRole(360, 250 - 40, false));
 
@@ -301,10 +301,72 @@ LevelData buildLevelData(int level, int windowWidth)
         // 三个移动刺，初始都向左移动
         // count = 2 表示每个移动刺由两个小三角组成
         // rightBound 设成 780，避免它们直接堵住最右边门口
-        addMovingSpike(220, data.groundY, 2, -5, 0, windowWidth, 36);
-        addMovingSpike(500, data.groundY, 2, -5, 0, windowWidth, 36);
-        addMovingSpike(780, data.groundY, 2, -5, 0, windowWidth, 36);
+        addMovingSpike(220, data.groundY, 2, -4, 0, windowWidth, 36);
+        addMovingSpike(500, data.groundY, 2, -4, 0, windowWidth, 36);
+        addMovingSpike(780, data.groundY, 2, -4, 0, windowWidth, 36);
     }
+    else if (level == 7)
+    {
+        // =========================
+        // 第7关：中台三圆 + 两侧凹槽
+        // 左边移动刺，右边移动刺+静态刺
+        // 门在右下角
+        // =========================
 
+        // 门
+        data.doorW = 40;
+        data.doorH = 60;
+        data.doorX = windowWidth - 20 - data.doorW;
+        data.doorY = data.groundY - data.doorH;
+        data.doorOpenAtStart = false;   // 有方块，初始关门
+
+        // -------------------------
+        // 连成一体的上层结构
+        // -------------------------
+
+        // 左侧高墙：只连到上层，不再插到底部地面
+        // 顶部 y=60，底部到 410，正好和上层平台连接
+        addBlock(60, 60, 40, 350);
+
+        // 左侧上层平台（低）
+        addBlock(100, 390, 260, 20);
+
+        // 中央大平台（高）
+        addBlock(360, 330, 220, 80);
+
+        // 右侧上层平台（低）
+        addBlock(580, 390, 180, 20);
+
+        // 最右小高台（高）
+        addBlock(760, 330, 50, 80);
+
+        // -------------------------
+        // 三个圆：都在中央大平台上
+        // -------------------------
+        data.circles.append(makeRole(390, 330 - 40, true));
+        data.circles.append(makeRole(450, 330 - 40, true));
+        data.circles.append(makeRole(510, 330 - 40, true));
+
+        // -------------------------
+        // 一个方块：在最右小高台上
+        // -------------------------
+        data.squares.append(makeRole(765, 330 - 40, false));
+
+        // -------------------------
+        // 左侧移动刺：在左侧低平台上移动
+        // -------------------------
+        addMovingSpike(220, 390, 2, -3, 100, 360, 36);
+
+        // -------------------------
+        // 右侧移动刺：在右侧低平台上移动
+        // -------------------------
+        addMovingSpike(620, 390, 2, -3, 580, 760, 36);
+
+        // -------------------------
+        // 右侧静态刺：放在右侧低平台靠右位置
+        // -------------------------
+        addSpike(QPoint(710, 390), QPoint(720, 362), QPoint(730, 390));
+        addSpike(QPoint(730, 390), QPoint(740, 362), QPoint(750, 390));
+    }
     return data;
 }

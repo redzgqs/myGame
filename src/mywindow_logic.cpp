@@ -1,10 +1,15 @@
 #include "mywindow.h"
 #include <QMessageBox>
+#include <cmath>
 
 QRect MyWindow::roleRect(const Role &role) const
 {
-    return QRect(role.x, role.y, role.w, role.h);
+    return QRect((int)std::round(role.x),
+                 (int)std::round(role.y),
+                 role.w,
+                 role.h);
 }
+
 
 QRect MyWindow::blockRect(const Block &block) const
 {
@@ -16,22 +21,20 @@ void MyWindow::updateRole(Role &role, int dir)
     if (!role.alive || role.escaped)
         return;
 
-    // =========================
-    // 1. 水平移动
-    // =========================
-    role.vx = dir * moveSpeed;
+    const double EPS = 0.8;
 
-    int oldX = role.x;
+    // 1. 左右移动
+    role.vx = dir * moveSpeed;
     role.x += role.vx;
 
-    // 左右边界
     if (role.x < 0)
         role.x = 0;
     if (role.x + role.w > width())
         role.x = width() - role.w;
 
-    // 和平台的左右碰撞
     QRect r = roleRect(role);
+
+    // 左右碰墙/平台
     for (int i = 0; i < blocks.size(); i++)
     {
         QRect b = blockRect(blocks[i]);
@@ -46,10 +49,8 @@ void MyWindow::updateRole(Role &role, int dir)
         }
     }
 
-    // =========================
     // 2. 垂直移动
-    // =========================
-    int oldY = role.y;
+    double oldY = role.y;
 
     role.vy += gravity;
     role.y += role.vy;
@@ -57,7 +58,7 @@ void MyWindow::updateRole(Role &role, int dir)
 
     r = roleRect(role);
 
-    // 先处理和平台的上下碰撞
+    // 与平台上下碰撞
     for (int i = 0; i < blocks.size(); i++)
     {
         QRect b = blockRect(blocks[i]);
@@ -65,28 +66,28 @@ void MyWindow::updateRole(Role &role, int dir)
         if (r.intersects(b))
         {
             // 从上方落到平台上
-            if (oldY + role.h <= blocks[i].y)
+            if (oldY + role.h <= blocks[i].y + EPS)
             {
                 role.y = blocks[i].y - role.h;
-                role.vy = 0;
+                role.vy = 0.0;
                 role.onGround = true;
             }
-            // 从下方顶到平台底部
-            else if (oldY >= blocks[i].y + blocks[i].h)
+            // 从下方顶到平台
+            else if (oldY >= blocks[i].y + blocks[i].h - EPS)
             {
                 role.y = blocks[i].y + blocks[i].h;
-                role.vy = 0;
+                role.vy = 0.0;
             }
 
             r = roleRect(role);
         }
     }
 
-    // 再处理最底部地面
-    if (role.y + role.h >= groundY)
+    // 与底部地面碰撞
+    if (role.y + role.h >= groundY - EPS)
     {
         role.y = groundY - role.h;
-        role.vy = 0;
+        role.vy = 0.0;
         role.onGround = true;
     }
 }
@@ -221,7 +222,7 @@ void MyWindow::nextLevel()
 {
     currentLevel++;
 
-    if (currentLevel > 6)
+    if (currentLevel > 7)
     {
         QMessageBox::information(this, "游戏完成", "恭喜你完成了全部关卡！");
         currentLevel = 1;
@@ -296,6 +297,36 @@ void MyWindow::updateGame()
         {
             updateMovingSpikes();
         }
+    }
+
+    if (jumpBufferFrames > 0)
+    {
+        bool jumped = false;
+
+        for (int i = 0; i < circles.size(); i++)
+        {
+            if (circles[i].alive && !circles[i].escaped && circles[i].onGround)
+            {
+                circles[i].vy = -jumpSpeed;
+                circles[i].onGround = false;
+                jumped = true;
+            }
+        }
+
+        for (int i = 0; i < squares.size(); i++)
+        {
+            if (squares[i].alive && squares[i].onGround)
+            {
+                squares[i].vy = -jumpSpeed;
+                squares[i].onGround = false;
+                jumped = true;
+            }
+        }
+
+        if (jumped)
+            jumpBufferFrames = 0;
+        else
+            jumpBufferFrames--;
     }
 
     // 圆和方块重叠：失败重开

@@ -30,7 +30,7 @@ MyWindow::MyWindow(QWidget *parent)
     resetTimer->setSingleShot(true);
     waitingReset = false;
 
-    totalLevels = 6;
+    totalLevels = 7;
     setupUI();
     initGame();
 
@@ -166,10 +166,11 @@ void MyWindow::initGame()
     keyLeft = false;
     keyRight = false;
     keyUp = false;
+    jumpBufferFrames = 0;
 
-    moveSpeed = 5;
-    jumpSpeed = 20;
-    gravity = 1;
+    moveSpeed = 4;
+    jumpSpeed = 16;
+    gravity = 0.65;
 
     currentLevel = 1;
     loadLevel(currentLevel);
@@ -193,6 +194,7 @@ void MyWindow::loadLevel(int level)
     keyLeft = false;
     keyRight = false;
     keyUp = false;
+    jumpBufferFrames = 0;
 
     LevelData data = buildLevelData(level, width());
 
@@ -393,26 +395,7 @@ void MyWindow::keyPressEvent(QKeyEvent *event)
     else if (event->key() == Qt::Key_Up)
     {
         keyUp = true;
-
-        // 所有圆一起跳
-        for (int i = 0; i < circles.size(); i++)
-        {
-            if (circles[i].alive && circles[i].onGround)
-            {
-                circles[i].vy = -jumpSpeed;
-                circles[i].onGround = false;
-            }
-        }
-
-        // 所有方块一起跳
-        for (int i = 0; i < squares.size(); i++)
-        {
-            if (squares[i].alive && squares[i].onGround)
-            {
-                squares[i].vy = -jumpSpeed;
-                squares[i].onGround = false;
-            }
-        }
+        jumpBufferFrames = 8;   // 约 8 帧缓冲
     }
 }
 

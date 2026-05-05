@@ -5,12 +5,12 @@
 
 struct Role
 {
-    int x;
-    int y;
+    double x;
+    double y;
+    double vx;
+    double vy;
     int w;
     int h;
-    int vx;
-    int vy;
     bool alive;
     bool escaped;
     bool onGround;

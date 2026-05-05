@@ -82,6 +82,8 @@ private:
     QTimer *resetTimer;
     bool waitingReset;
 
+    int jumpBufferFrames;
+
     // 按键状态
     bool keyLeft;
     bool keyRight;
@@ -120,8 +122,7 @@ private:
     // 物理参数
     int moveSpeed;
     int jumpSpeed;
-    int gravity;
-
+    double gravity;
 
     SceneState sceneState;
 
