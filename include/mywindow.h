@@ -1,22 +1,24 @@
 #ifndef MYWINDOW_H
 #define MYWINDOW_H
 
-#include <QWidget>
-#include <QTimer>
 #include <QKeyEvent>
 #include <QPaintEvent>
 #include <QPixmap>
-#include <QVector>
 #include <QPoint>
-#include <QRect>
 #include <QPushButton>
+#include <QRect>
+#include <QTimer>
+#include <QVector>
+#include <QWidget>
 #include "gameobjects.h"
 
+class QPainter;
 
 enum SceneState
 {
     MenuScene,
     GameScene,
+    RulesScene,
     FinishScene
 };
 
@@ -25,7 +27,7 @@ class MyWindow : public QWidget
     Q_OBJECT
 
 public:
-    MyWindow(QWidget *parent = nullptr);
+    explicit MyWindow(QWidget *parent = nullptr);
     ~MyWindow();
 
 protected:
@@ -37,46 +39,55 @@ private slots:
     void updateGame();
 
 private:
+    // 初始化与关卡切换
     void initGame();
     void resetGame();
-
     void loadLevel(int level);
     void nextLevel();
 
-    void drawRole(QPainter &painter, const Role &role);
-    void updateRole(Role &role, int dir);
-    QRect roleRect(const Role &role) const;
-
-    bool pointInTriangle(QPoint p, QPoint a, QPoint b, QPoint c);
-    bool roleHitSpike(const Role &role);
-    bool allSquaresDead() const;
-    bool circlesHitSquares() const;
-
-    QRect blockRect(const Block &block) const;
-
-    bool allCirclesEscaped() const;
-
+    // 场景与界面
     void setupUI();
-    void showMenu();
-    void startLevel(int level);
     void updateUIVisibility();
+    void showMenu();
+    void showFinishScene();
+    void showRulesScene();
+    void startLevel(int level);
 
-    void scheduleReset();
+    // 绘制
+    void drawRole(QPainter &painter, const Role &role);
 
-    void killCircleAndReset(int index);
-
+    // 角色与机关更新
+    void updateRole(Role &role, int dir);
     void updateMovingSpikes();
-
     void updateHiddenSpikes();
 
-    void showFinishScene();
+    // 碰撞与判定
+    QRect roleRect(const Role &role) const;
+    QRect blockRect(const Block &block) const;
+    bool pointInTriangle(QPoint p, QPoint a, QPoint b, QPoint c);
+    bool roleHitSpike(const Role &role);
+    bool circlesHitSquares() const;
+    bool allSquaresDead() const;
+    bool allCirclesEscaped() const;
 
+    // 失败与过场
+    void scheduleReset();
     void scheduleNextLevel();
-
+    void killCircleAndReset(int index);
 
 private:
     QTimer *timer;
+    QTimer *resetTimer;
+    QTimer *clearTimer;
+
+    // 场景状态
+    SceneState sceneState;
+    bool waitingReset;
+    bool waitingNextLevel;
+
+    // 图片资源
     QPixmap bg;
+    QPixmap rulesImg;
     QPixmap realImg;
     QPixmap fakeImg;
     QPixmap menuLeftImg;
@@ -89,39 +100,27 @@ private:
     QPixmap failNailongImg;
     QPixmap levelClearImg;
 
-
-    QTimer *resetTimer;
-    bool waitingReset;
-
-    int jumpBufferFrames;
-
-    // 按键状态
+    // 输入状态
     bool keyLeft;
     bool keyRight;
     bool keyUp;
+    int jumpBufferFrames;
 
-    // 多个圆和多个方块
+    // 游戏对象
     QVector<Role> circles;
     QVector<Role> squares;
-
-    // 所有刺
     QVector<Spike> spikes;
-
     QVector<HiddenSpike> hiddenSpikes;
-
-    // block
     QVector<Block> blocks;
-
-
     QVector<MovingSpike> movingSpikes;
+
+    // 移动刺控制
     bool movingSpikesStarted;
     int movingSpikeDelayFrames;
 
-
-    // 当前关卡
+    // 关卡与地图参数
     int currentLevel;
-
-    // 地图参数
+    int totalLevels;
     int groundY;
 
     // 门
@@ -137,14 +136,10 @@ private:
     int jumpSpeed;
     double gravity;
 
-    SceneState sceneState;
-
-    QVector<QPushButton*> levelButtons;
-    int totalLevels;
+    // 菜单按钮
+    QVector<QPushButton *> levelButtons;
+    QPushButton *btnRules;
     QPushButton *btnBackToMenu;
-
-    QTimer *clearTimer;
-    bool waitingNextLevel;
 };
 
 #endif // MYWINDOW_H

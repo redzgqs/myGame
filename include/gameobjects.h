@@ -41,7 +41,7 @@ struct MovingSpike
     int vx;
     int leftBound;
     int rightBound;
-    int height;   // 新增：移动刺高度
+    int height;
 };
 
 struct HiddenSpike
@@ -49,8 +49,8 @@ struct HiddenSpike
     QPoint a;
     QPoint b;
     QPoint c;
-    QRect triggerRect;   // 进入这个范围就触发
-    bool visible;        // 是否已经出现
+    QRect triggerRect;
+    bool visible;
 };
 
-#endif // GAMEOBJECTS_H
+#endif

@@ -26,4 +26,4 @@ struct LevelData
 
 LevelData buildLevelData(int level, int windowWidth);
 
-#endif // LEVELDATA_H
+#endif
