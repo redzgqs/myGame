@@ -5,6 +5,7 @@
 #include <QPainter>
 #include <QPen>
 #include <QPolygon>
+#include <cmath>
 
 #include "leveldata.h"
 
@@ -63,6 +64,13 @@ MyWindow::MyWindow(QWidget *parent)
 
         update();
     });
+
+    fadeAlpha = 255;
+    fadeDirection = -1;
+    isFading = true;
+
+    failPopupScale = 0.8;
+    clearPopupScale = 0.8;
 
     totalLevels = 9;
 
@@ -159,6 +167,10 @@ void MyWindow::showMenu()
 {
     sceneState = MenuScene;
 
+    fadeAlpha = 255;
+    fadeDirection = -1;
+    isFading = true;
+
     keyLeft = false;
     keyRight = false;
     keyUp = false;
@@ -172,8 +184,8 @@ void MyWindow::showMenu()
     waitingReset = false;
     waitingNextLevel = false;
 
-    if (timer)
-        timer->stop();
+    if (timer && !timer->isActive())
+        timer->start(16);
 
     if (btnBackToMenu)
     {
@@ -189,12 +201,13 @@ void MyWindow::showRulesScene()
 {
     sceneState = RulesScene;
 
+    fadeAlpha = 255;
+    fadeDirection = -1;
+    isFading = true;
+
     keyLeft = false;
     keyRight = false;
     keyUp = false;
-
-    if (timer)
-        timer->stop();
 
     if (resetTimer && resetTimer->isActive())
         resetTimer->stop();
@@ -211,6 +224,9 @@ void MyWindow::showRulesScene()
         btnBackToMenu->setGeometry(380, 540, 140, 40);
     }
 
+    if (timer && !timer->isActive())
+        timer->start(16);
+
     updateUIVisibility();
     update();
 }
@@ -219,18 +235,16 @@ void MyWindow::showFinishScene()
 {
     sceneState = FinishScene;
 
+    fadeAlpha = 255;
+    fadeDirection = -1;
+    isFading = true;
+
     keyLeft = false;
     keyRight = false;
     keyUp = false;
 
-    if (timer)
-    {
-        timer->stop();
-    }
     if (resetTimer && resetTimer->isActive())
-    {
         resetTimer->stop();
-    }
 
     waitingReset = false;
 
@@ -239,6 +253,9 @@ void MyWindow::showFinishScene()
         btnBackToMenu->setText("返回主界面");
         btnBackToMenu->setGeometry(360, 500, 180, 45);
     }
+
+    if (timer && !timer->isActive())
+        timer->start(16);
 
     updateUIVisibility();
     update();
@@ -251,6 +268,10 @@ void MyWindow::startLevel(int level)
     loadLevel(currentLevel);
 
     sceneState = GameScene;
+
+    fadeAlpha = 255;
+    fadeDirection = -1;
+    isFading = true;
 
     keyLeft = false;
     keyRight = false;
@@ -273,6 +294,7 @@ void MyWindow::initGame()
     keyRight = false;
     keyUp = false;
     jumpBufferFrames = 0;
+    animFrame = 0;
 
     moveSpeed = 4;
     jumpSpeed = 16;
@@ -298,6 +320,7 @@ void MyWindow::loadLevel(int level)
     keyRight = false;
     keyUp = false;
     jumpBufferFrames = 0;
+    animFrame = 0;
 
     LevelData data = buildLevelData(level, width());
 
@@ -326,19 +349,81 @@ void MyWindow::loadLevel(int level)
 void MyWindow::drawRole(QPainter &painter, const Role &role)
 {
     if (!role.alive || role.escaped)
-    {
         return;
+
+    const QPixmap &pix = role.isCircle ? realImg : fakeImg;
+    if (pix.isNull())
+        return;
+
+    double drawX = role.x;
+    double drawY = role.y;
+    double drawW = role.w;
+    double drawH = role.h;
+
+
+    if (role.onGround && std::abs(role.vx) < 0.01)
+    {
+        double floatOffset = std::sin(animFrame * 0.10 + role.x * 0.03) * 2.5;
+        drawY += floatOffset;
     }
 
-    QRect target(role.x, role.y, role.w, role.h);
 
-    if (role.isCircle)
+    if (!role.onGround)
     {
-        painter.drawPixmap(target, realImg);
+        if (role.vy < -0.1)
+        {
+            drawW = role.w - 5;
+            drawH = role.h + 5;
+            drawX += 3;
+            drawY -= 6;
+        }
+        else if (role.vy > 0.1)
+        {
+            drawW = role.w - 4;
+            drawH = role.h + 4;
+            drawX += 2;
+            drawY -= 4;
+        }
+    }
+
+
+    if (role.landAnimFrames > 0)
+    {
+        double t = role.landAnimFrames / 8.0;
+        double extraW = 10.0 * t;
+        double lessH = 8.0 * t;
+
+        drawX -= extraW / 2.0;
+        drawY += lessH;
+        drawW += extraW;
+        drawH -= lessH;
+    }
+
+    int finalW = (int)std::round(drawW);
+    int finalH = (int)std::round(drawH);
+
+    if (finalW <= 0 || finalH <= 0)
+        return;
+
+    QRect target(
+        (int)std::round(drawX),
+        (int)std::round(drawY),
+        finalW,
+        finalH
+        );
+
+
+    if (role.faceRight)
+    {
+        painter.drawPixmap(target, pix);
     }
     else
     {
-        painter.drawPixmap(target, fakeImg);
+        painter.save();
+        painter.translate(target.x() + target.width(), target.y());
+        painter.scale(-1, 1);
+        painter.drawPixmap(0, 0, target.width(), target.height(), pix);
+        painter.restore();
     }
 }
 
@@ -371,6 +456,12 @@ void MyWindow::paintEvent(QPaintEvent *event)
 
         painter.setFont(QFont("幼圆", 16));
         painter.drawText(0, 115, width(), 40, Qt::AlignHCenter, "关卡");
+
+        if (fadeAlpha > 0)
+        {
+            painter.fillRect(rect(), QColor(0, 0, 0, fadeAlpha));
+        }
+
         return;
     }
 
@@ -381,8 +472,13 @@ void MyWindow::paintEvent(QPaintEvent *event)
 
         if (!rulesImg.isNull())
         {
-            QRect rulesRect(0, 0, width(), height()- 40);
+            QRect rulesRect(0, 0, width(), height()- 70);
             painter.drawPixmap(rulesRect, rulesImg);
+        }
+
+        if (fadeAlpha > 0)
+        {
+            painter.fillRect(rect(), QColor(0, 0, 0, fadeAlpha));
         }
 
         return;
@@ -405,6 +501,12 @@ void MyWindow::paintEvent(QPaintEvent *event)
 
         painter.setFont(QFont("幼圆", 22, QFont::Bold));
         painter.drawText(0, 420, width(), 40, Qt::AlignHCenter, "你拯救了奶龙！");
+
+        if (fadeAlpha > 0)
+        {
+            painter.fillRect(rect(), QColor(0, 0, 0, fadeAlpha));
+        }
+
         return;
     }
 
@@ -527,32 +629,55 @@ void MyWindow::paintEvent(QPaintEvent *event)
 
     if (waitingReset)
     {
-        painter.fillRect(rect(), QColor(0, 0, 0, 120));
+        painter.fillRect(rect(), QColor(0, 0, 0, 160));
 
         if (!failNailongImg.isNull())
         {
-            QRect failImgRect(290, 120, 320, 360);
+            int baseW = 320;
+            int baseH = 360;
+
+            int drawW = (int)(baseW * failPopupScale);
+            int drawH = (int)(baseH * failPopupScale);
+
+            int drawX = (width() - drawW) / 2;
+            int drawY = 120 + (baseH - drawH) / 2;
+
+            QRect failImgRect(drawX, drawY, drawW, drawH);
             painter.drawPixmap(failImgRect, failNailongImg);
         }
 
         painter.setPen(Qt::white);
-        painter.setFont(QFont("Arial", 24, QFont::Bold));
+        painter.setFont(QFont("幼圆", 24, QFont::Bold));
         painter.drawText(0, 500, width(), 40, Qt::AlignHCenter, "哈哈哈哈");
     }
 
     if (waitingNextLevel)
     {
-        painter.fillRect(rect(), QColor(0, 0, 0, 120));
+        painter.fillRect(rect(), QColor(0, 0, 0, 160));
 
         if (!levelClearImg.isNull())
         {
-            QRect clearImgRect(300, 120, 280, 300);
+            int baseW = 280;
+            int baseH = 300;
+
+            int drawW = (int)(baseW * clearPopupScale);
+            int drawH = (int)(baseH * clearPopupScale);
+
+            int drawX = (width() - drawW) / 2;
+            int drawY = 120 + (baseH - drawH) / 2;
+
+            QRect clearImgRect(drawX, drawY, drawW, drawH);
             painter.drawPixmap(clearImgRect, levelClearImg);
         }
 
         painter.setPen(Qt::white);
-        painter.setFont(QFont("Arial", 24, QFont::Bold));
+        painter.setFont(QFont("幼圆", 24, QFont::Bold));
         painter.drawText(0, 455, width(), 40, Qt::AlignHCenter, "牛福");
+    }
+
+    if (fadeAlpha > 0)
+    {
+        painter.fillRect(rect(), QColor(0, 0, 0, fadeAlpha));
     }
 }
 

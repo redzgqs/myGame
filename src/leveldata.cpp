@@ -25,6 +25,8 @@ LevelData buildLevelData(int level, int windowWidth)
         r.escaped = false;
         r.onGround = true;
         r.isCircle = isCircle;
+        r.faceRight = true;
+        r.landAnimFrames = 0;
         return r;
     };
 

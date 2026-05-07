@@ -3,25 +3,24 @@
 void MyWindow::scheduleReset()
 {
     if (waitingReset)
-    {
         return;
-    }
 
     waitingReset = true;
+    failPopupScale = 0.7;
     timer->stop();
     resetTimer->start(1000);
+    repaint();
 }
 
 void MyWindow::scheduleNextLevel()
 {
     if (waitingNextLevel)
-    {
         return;
-    }
 
     waitingNextLevel = true;
+    clearPopupScale = 0.7;
     timer->stop();
-    update();
+    repaint();
     clearTimer->start(1000);
 }
 
@@ -57,8 +56,59 @@ void MyWindow::updateGame()
 {
     if (sceneState != GameScene || waitingReset || waitingNextLevel)
     {
+
+        if (waitingReset && failPopupScale < 1.0)
+        {
+            failPopupScale += 0.06;
+            if (failPopupScale > 1.0)
+                failPopupScale = 1.0;
+        }
+
+
+        if (waitingNextLevel && clearPopupScale < 1.0)
+        {
+            clearPopupScale += 0.06;
+            if (clearPopupScale > 1.0)
+                clearPopupScale = 1.0;
+        }
+
+
+        if (isFading)
+        {
+            fadeAlpha += fadeDirection * 18;
+
+            if (fadeAlpha <= 0)
+            {
+                fadeAlpha = 0;
+                isFading = false;
+            }
+            else if (fadeAlpha >= 255)
+            {
+                fadeAlpha = 255;
+                isFading = false;
+            }
+        }
+
         update();
         return;
+    }
+
+    animFrame++;
+
+    if (isFading)
+    {
+        fadeAlpha += fadeDirection * 18;
+
+        if (fadeAlpha <= 0)
+        {
+            fadeAlpha = 0;
+            isFading = false;
+        }
+        else if (fadeAlpha >= 255)
+        {
+            fadeAlpha = 255;
+            isFading = false;
+        }
     }
 
     int dir = 0;
@@ -79,6 +129,18 @@ void MyWindow::updateGame()
     for (int i = 0; i < squares.size(); i++)
     {
         updateRole(squares[i], dir);
+    }
+
+    for (int i = 0; i < circles.size(); i++)
+    {
+        if (circles[i].landAnimFrames > 0)
+            circles[i].landAnimFrames--;
+    }
+
+    for (int i = 0; i < squares.size(); i++)
+    {
+        if (squares[i].landAnimFrames > 0)
+            squares[i].landAnimFrames--;
     }
 
     if (!movingSpikes.isEmpty())

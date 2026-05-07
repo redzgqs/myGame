@@ -16,6 +16,8 @@ struct Role
     bool escaped;
     bool onGround;
     bool isCircle;
+    bool faceRight;
+    int landAnimFrames;
 };
 
 struct Spike

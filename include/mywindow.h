@@ -80,6 +80,13 @@ private:
     QTimer *resetTimer;
     QTimer *clearTimer;
 
+    int fadeAlpha;
+    int fadeDirection;
+    bool isFading;
+
+    double failPopupScale;
+    double clearPopupScale;
+
     // 场景状态
     SceneState sceneState;
     bool waitingReset;
@@ -135,6 +142,7 @@ private:
     int moveSpeed;
     int jumpSpeed;
     double gravity;
+    int animFrame;
 
     // 菜单按钮
     QVector<QPushButton *> levelButtons;

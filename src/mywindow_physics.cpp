@@ -20,23 +20,25 @@ QRect MyWindow::blockRect(const Block &block) const
 void MyWindow::updateRole(Role &role, int dir)
 {
     if (!role.alive || role.escaped)
-    {
         return;
-    }
 
     const double EPS = 0.8;
+    bool wasOnGround = role.onGround;
+
 
     role.vx = dir * moveSpeed;
+
+    if (role.vx > 0.01)
+        role.faceRight = true;
+    else if (role.vx < -0.01)
+        role.faceRight = false;
+
     role.x += role.vx;
 
     if (role.x < 0)
-    {
         role.x = 0;
-    }
     if (role.x + role.w > width())
-    {
         role.x = width() - role.w;
-    }
 
     QRect r = roleRect(role);
 
@@ -46,17 +48,14 @@ void MyWindow::updateRole(Role &role, int dir)
         if (r.intersects(b))
         {
             if (role.vx > 0)
-            {
                 role.x = blocks[i].x - role.w;
-            }
             else if (role.vx < 0)
-            {
                 role.x = blocks[i].x + blocks[i].w;
-            }
 
             r = roleRect(role);
         }
     }
+
 
     double oldY = role.y;
 
@@ -69,6 +68,7 @@ void MyWindow::updateRole(Role &role, int dir)
     for (int i = 0; i < blocks.size(); i++)
     {
         QRect b = blockRect(blocks[i]);
+
         if (r.intersects(b))
         {
             if (oldY + role.h <= blocks[i].y + EPS)
@@ -92,6 +92,12 @@ void MyWindow::updateRole(Role &role, int dir)
         role.y = groundY - role.h;
         role.vy = 0.0;
         role.onGround = true;
+    }
+
+
+    if (!wasOnGround && role.onGround)
+    {
+        role.landAnimFrames = 8;
     }
 }
 
