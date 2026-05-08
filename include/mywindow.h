@@ -10,6 +10,7 @@
 #include <QTimer>
 #include <QVector>
 #include <QWidget>
+#include <QSoundEffect>
 #include "gameobjects.h"
 
 class QPainter;
@@ -106,6 +107,8 @@ private:
     QPixmap finishNailongImg;
     QPixmap failNailongImg;
     QPixmap levelClearImg;
+
+    QSoundEffect *failSound;
 
     // 输入状态
     bool keyLeft;

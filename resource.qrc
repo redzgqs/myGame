@@ -13,5 +13,6 @@
 	<file alias="fail_nailong.png">images/fail_nailong.png</file>
 	<file alias="level_clear.png">images/level_clear.png</file>
 	<file alias="rules.png">images/rules.png</file>
+	<file alias="fail.wav">audio/fail.wav</file>
     </qresource>
 </RCC>

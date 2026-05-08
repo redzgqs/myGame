@@ -7,6 +7,13 @@ void MyWindow::scheduleReset()
 
     waitingReset = true;
     failPopupScale = 0.7;
+
+    if (failSound)
+    {
+        failSound->stop();
+        failSound->play();
+    }
+
     timer->stop();
     resetTimer->start(1000);
     repaint();

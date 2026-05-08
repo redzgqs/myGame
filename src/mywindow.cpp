@@ -29,6 +29,11 @@ MyWindow::MyWindow(QWidget *parent)
     failNailongImg.load(":/images/fail_nailong.png");
     levelClearImg.load(":/images/level_clear.png");
 
+    failSound = new QSoundEffect(this);
+    failSound->setSource(QUrl::fromLocalFile("D:/MyCodeQt/prj/I_am_nailong/audio/fail.wav"));
+    failSound->setLoopCount(1);
+    failSound->setVolume(0.8);
+
     timer = new QTimer(this);
 
     resetTimer = new QTimer(this);
@@ -78,6 +83,8 @@ MyWindow::MyWindow(QWidget *parent)
     initGame();
     timer->start(16);
     showMenu();
+
+
 }
 
 MyWindow::~MyWindow()

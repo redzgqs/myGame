@@ -9,8 +9,8 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC OFF)
 
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets Multimedia)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Multimedia)
 
 set(PROJECT_SOURCES
     src/main.cpp
@@ -40,7 +40,8 @@ endif()
 
 target_include_directories(I_am_nailong PRIVATE include)
 
-target_link_libraries(I_am_nailong PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+target_link_libraries(I_am_nailong PRIVATE Qt${QT_VERSION_MAJOR}::Widgets
+                                      Qt${QT_VERSION_MAJOR}::Multimedia)
 
 include(GNUInstallDirs)
 install(TARGETS I_am_nailong
