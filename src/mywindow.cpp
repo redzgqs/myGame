@@ -34,6 +34,15 @@ MyWindow::MyWindow(QWidget *parent)
     failSound->setLoopCount(1);
     failSound->setVolume(0.8);
 
+    bgmPlayer = new QMediaPlayer(this);
+    bgmAudioOutput = new QAudioOutput(this);
+
+    bgmPlayer->setAudioOutput(bgmAudioOutput);
+    bgmAudioOutput->setVolume(0.35);
+    bgmPlayer->setSource(QUrl::fromLocalFile("D:/MyCodeQt/prj/I_am_nailong/audio/bgm.mp3"));
+    bgmPlayer->setLoops(QMediaPlayer::Infinite);
+    bgmPlayer->play();
+
     timer = new QTimer(this);
 
     resetTimer = new QTimer(this);

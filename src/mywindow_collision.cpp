@@ -21,10 +21,12 @@ bool MyWindow::roleHitSpike(const Role &role)
         return false;
     }
 
+    // 取角色底边三个点做碰刺检测
     QPoint p1(role.x + 8, role.y + role.h - 1);
     QPoint p2(role.x + role.w / 2, role.y + role.h - 1);
     QPoint p3(role.x + role.w - 8, role.y + role.h - 1);
 
+    // 静态刺
     for (int i = 0; i < spikes.size(); i++)
     {
         if (pointInTriangle(p1, spikes[i].a, spikes[i].b, spikes[i].c)) return true;
@@ -32,6 +34,7 @@ bool MyWindow::roleHitSpike(const Role &role)
         if (pointInTriangle(p3, spikes[i].a, spikes[i].b, spikes[i].c)) return true;
     }
 
+    // 移动刺
     for (int i = 0; i < movingSpikes.size(); i++)
     {
         for (int j = 0; j < movingSpikes[i].count; j++)
@@ -49,6 +52,7 @@ bool MyWindow::roleHitSpike(const Role &role)
             if (pointInTriangle(p3, a, b, c)) return true;
         }
     }
+
 
     for (int i = 0; i < hiddenSpikes.size(); i++)
     {

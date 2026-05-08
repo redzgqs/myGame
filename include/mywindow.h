@@ -11,6 +11,8 @@
 #include <QVector>
 #include <QWidget>
 #include <QSoundEffect>
+#include <QMediaPlayer>
+#include <QAudioOutput>
 #include "gameobjects.h"
 
 class QPainter;
@@ -53,8 +55,6 @@ private:
     void showFinishScene();
     void showRulesScene();
     void startLevel(int level);
-
-    // 绘制
     void drawRole(QPainter &painter, const Role &role);
 
     // 角色与机关更新
@@ -88,7 +88,6 @@ private:
     double failPopupScale;
     double clearPopupScale;
 
-    // 场景状态
     SceneState sceneState;
     bool waitingReset;
     bool waitingNextLevel;
@@ -109,6 +108,8 @@ private:
     QPixmap levelClearImg;
 
     QSoundEffect *failSound;
+    QMediaPlayer *bgmPlayer;
+    QAudioOutput *bgmAudioOutput;
 
     // 输入状态
     bool keyLeft;

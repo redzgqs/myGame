@@ -14,5 +14,6 @@
 	<file alias="level_clear.png">images/level_clear.png</file>
 	<file alias="rules.png">images/rules.png</file>
 	<file alias="fail.wav">audio/fail.wav</file>
+	<file alias="bgm.mp3">audio/bgm.mp3</file>
     </qresource>
 </RCC>

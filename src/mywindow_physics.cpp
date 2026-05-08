@@ -25,7 +25,6 @@ void MyWindow::updateRole(Role &role, int dir)
     const double EPS = 0.8;
     bool wasOnGround = role.onGround;
 
-
     role.vx = dir * moveSpeed;
 
     if (role.vx > 0.01)
@@ -42,6 +41,7 @@ void MyWindow::updateRole(Role &role, int dir)
 
     QRect r = roleRect(role);
 
+    // 左右与平台碰撞
     for (int i = 0; i < blocks.size(); i++)
     {
         QRect b = blockRect(blocks[i]);
@@ -56,15 +56,16 @@ void MyWindow::updateRole(Role &role, int dir)
         }
     }
 
-
     double oldY = role.y;
 
+    // 竖直运动
     role.vy += gravity;
     role.y += role.vy;
     role.onGround = false;
 
     r = roleRect(role);
 
+    // 与平台的碰撞
     for (int i = 0; i < blocks.size(); i++)
     {
         QRect b = blockRect(blocks[i]);
@@ -77,6 +78,7 @@ void MyWindow::updateRole(Role &role, int dir)
                 role.vy = 0.0;
                 role.onGround = true;
             }
+
             else if (oldY >= blocks[i].y + blocks[i].h - EPS)
             {
                 role.y = blocks[i].y + blocks[i].h;
@@ -87,6 +89,7 @@ void MyWindow::updateRole(Role &role, int dir)
         }
     }
 
+    // 与最底部地面碰撞
     if (role.y + role.h >= groundY - EPS)
     {
         role.y = groundY - role.h;

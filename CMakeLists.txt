@@ -43,6 +43,10 @@ target_include_directories(I_am_nailong PRIVATE include)
 target_link_libraries(I_am_nailong PRIVATE Qt${QT_VERSION_MAJOR}::Widgets
                                       Qt${QT_VERSION_MAJOR}::Multimedia)
 
+set_target_properties(I_am_nailong PROPERTIES
+    WIN32_EXECUTABLE TRUE
+)
+
 include(GNUInstallDirs)
 install(TARGETS I_am_nailong
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
